@@ -9,7 +9,7 @@ import schema
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_403_FORBIDDEN, HTTP_201_CREATED, HTTP_409_CONFLICT
 from routes.authentication import router as auth_router
 from routes.admin import router as admin_roure
-from routes.librarian import  router as librarian_roure
+from routes.books import  router as books_routes
 
 app = FastAPI()
 
@@ -28,4 +28,4 @@ def welcome():
 # including the routers from the other files
 app.include_router(auth_router)
 app.include_router(admin_roure)
-app.include_router(librarian_roure)
+app.include_router(books_routes)

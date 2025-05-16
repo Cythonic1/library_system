@@ -23,7 +23,7 @@ router = APIRouter(
 @router.post("/signup", status_code=HTTP_201_CREATED)
 def signup(user: schema.SignUpRequest, db: Session = Depends(get_db)):
     # fetch  data from the database
-    user_db = db.query(modules.User).filter(modules.User.username == user.username).first()
+    user_db = db.query(modules.Users).filter(modules.Users.username == user.username).first()
 
     # check if the username alredy exist
     if user_db is not None :
@@ -43,7 +43,7 @@ def signup(user: schema.SignUpRequest, db: Session = Depends(get_db)):
     role = userRoleEnumMapping(user.role)
 
     # Creating new user object
-    user_new = modules.User(
+    user_new = modules.Users(
         **user.dict(exclude={"role"}),  # exclude role from Pydantic dict
         role=role
     )
@@ -58,13 +58,14 @@ def signup(user: schema.SignUpRequest, db: Session = Depends(get_db)):
 # almost same as above
 @router.post("/login")
 def login(user: schema.LoginRequest, db: Session = Depends(get_db)):
-    db_user = db.query(modules.User).filter(modules.User.username == user.username).first()
+    db_user = db.query(modules.Users).filter(modules.Users.username == user.username).first()
     if not db_user or not verify_password(user.password, db_user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token_data = {
         "sub": db_user.username,
-        "role": db_user.role.value
+        "role": db_user.role.value,
+        "user_id": db_user.user_id
     }
 
     access_token = create_access_token(token_data)

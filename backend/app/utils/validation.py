@@ -1,8 +1,7 @@
 from passlib.context import CryptContext
 import re
 from fastapi import HTTPException
-from schema import RoleEnumUser
-from modules import RoleEnum
+from schema import AvailabilityStatus, RoleEnumUser, RoleEnum
 
 
 # Bcrypt context
@@ -43,3 +42,10 @@ def userRoleEnumMapping(role: RoleEnumUser ) -> RoleEnum:
         return RoleEnum.librarian
     elif role == RoleEnumUser.user:
         return RoleEnum.user
+
+
+def counterCheck(countr : int) -> AvailabilityStatus :
+    if countr > 0 :
+        return AvailabilityStatus.available
+    else :
+        return AvailabilityStatus.unavailable
