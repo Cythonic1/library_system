@@ -29,11 +29,11 @@ The Application gonne be a library_system where users can borrow books and there
 and admin users.
 
 ### backend
-- Implement authentication and authorization in the API (Fast API)
-- Implement CRUD endpoints for the books
+- Implement authentication and authorization in the API (Fast API) [Done]
+- Implement CRUD endpoints for the books [Done]
 - endpoints to send notification to the user 
 - endpoint to check the if the notification where access then check them 
-- endpoint to view user current borrowed books and the deadline to return them.
+- endpoint to view user current borrowed books and the deadline to return them. [80% Done]
 - endpoint to check if the user miss the return date then fee with present
 
 ### frontend
