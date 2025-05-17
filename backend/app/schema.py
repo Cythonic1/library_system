@@ -39,6 +39,16 @@ class SignUpRequestAdmin(BaseModel):
     role: RoleEnum
 
 
+class UserInfo(BaseModel):
+    user_id: int
+    username: str
+    email: str
+    role: RoleEnum
+    created_at: datetime
+    updated_at: datetime
+    class Config:
+        orm_mode = True
+
 
 class UserOutAdmin(BaseModel):
     user_id: int
