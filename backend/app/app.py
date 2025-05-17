@@ -10,6 +10,7 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_403_
 from routes.authentication import router as auth_router
 from routes.admin import router as admin_roure
 from routes.books import  router as books_routes
+from routes.notifications import router as notifications_router
 
 app = FastAPI()
 
@@ -29,3 +30,4 @@ def welcome():
 app.include_router(auth_router)
 app.include_router(admin_roure)
 app.include_router(books_routes)
+app.include_router(notifications_router)
