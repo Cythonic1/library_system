@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 from enum import Enum
@@ -82,6 +82,24 @@ class BookOut(BookBase):
     book_id: int
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        orm_mode = True
+        
+class NotificationCreate(BaseModel):
+    borrow_id: int
+    user_id: int
+    message: str
+    sent_date: datetime = Field(default_factory=datetime.utcnow)
+    accessed: bool = False
+
+class NotificationOut(BaseModel):
+    notification_id: int
+    borrow_id: int
+    user_id: int
+    message: str
+    sent_date: datetime
+    accessed: bool
 
     class Config:
         orm_mode = True
