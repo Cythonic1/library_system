@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 # Here you need to run postgresql localy and create an admin user
 # and give him an access on the library database. Do not fogot to
 # create that database
-SQLALCHEMY_DATABASE_URL = 'postgresql://admin:password123@localhost:5432/library'
+SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://admin_login:Yasser00@192.168.122.89:1433/website?driver=ODBC+Driver+17+for+SQL+Server"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
