@@ -7,7 +7,7 @@ from database import get_db
 import modules
 from fastapi import HTTPException, Depends
 from utils.validation import userRoleEnumMapping, verify_password, hash_password, validate_password_strength
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_403_FORBIDDEN, HTTP_201_CREATED, HTTP_409_CONFLICT
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_403_FORBIDDEN, HTTP_201_CREATED, HTTP_409_CONFLICT, HTTP_200_OK
 from utils.jwt import create_access_token
 from utils.authorization import require_roles
 
@@ -28,7 +28,7 @@ def admin_panel(user=Depends(require_roles("admin"))):
 
 
 # adding user with the admin and librarin roles
-@router.post("/users/add_users")
+@router.post("/users/add_users", status_code=HTTP_200_OK)
 def add_users_admin(user: schema.SignUpRequestAdmin, db:Session = Depends(get_db)):
     # fetch  data from the database
     user_db = db.query(modules.Users).filter(modules.Users.username == user.username).first()
@@ -60,7 +60,7 @@ def add_users_admin(user: schema.SignUpRequestAdmin, db:Session = Depends(get_db
 
 
 # Getting all the users
-@router.get("/users", response_model=List[schema.UserOutAdmin])
+@router.get("/users", response_model=List[schema.UserOutAdmin], status_code=HTTP_200_OK)
 def get_all_users(db: Session = Depends(get_db), current_user = Depends(require_roles("admin"))):
     users = db.query(modules.Users).all()
     return users
@@ -80,7 +80,7 @@ def update_user(user_id: int, user_update: schema.UpdateUserRequestAdmin, db: Se
     if user_update.email:
         user_db.email = user_update.email
     if user_update.role:
-        user_db.role = modules.RoleEnum(user_update.role)
+        user_db.role = schema.RoleEnum(user_update.role)
     user_db.updated_at = datetime.now()
 
     db.commit()
