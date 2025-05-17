@@ -1,3 +1,5 @@
+from typing_extensions import List
+from utils.authorization import require_roles
 from fastapi.routing import APIRoute, APIRouter
 from sqlalchemy.orm.session import Session
 import schema
@@ -70,3 +72,10 @@ def login(user: schema.LoginRequest, db: Session = Depends(get_db)):
 
     access_token = create_access_token(token_data)
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+
+@router.get("/sesstion", response_model=List[schema.UserInfo])
+def get_current_user_role(user=Depends(require_roles("admin", "librarian", "user")), db:Session = Depends(get_db)):
+    current_user = db.query(modules.Users).filter(modules.Users.user_id == user["user_id"]).first();
+    return current_user

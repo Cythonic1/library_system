@@ -84,7 +84,7 @@ def update_book(
 def get_book(
     book_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(require_roles("admin", "librarian"))
+    current_user = Depends(require_roles("admin", "librarian", "user"))
 ):
     book = db.query(modules.Books).filter_by(book_id=book_id).first()
     if not book:
