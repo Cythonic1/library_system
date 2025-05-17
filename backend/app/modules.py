@@ -48,10 +48,12 @@ class Books(Base):
     book_id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(255), nullable=False)
     author = Column(String(255), nullable=False)
+    desc = Column(String(255), nullable=False)
     publication_year = Column(Integer)  # SQLAlchemy doesn't have a Year type
     genre = Column(String(100))
     counter = Column(Integer, default=0)
     availability_status = Column(Enum(schema.AvailabilityStatus), default=schema.AvailabilityStatus.available)
+    url = Column(String(255), nullable=True)
 
 
     added_by = Column(Integer, ForeignKey('users.user_id'))
