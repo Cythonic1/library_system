@@ -64,7 +64,9 @@ class BookBase(BaseModel):
     title: str
     author: str
     publication_year: Optional[int] = None
+    desc: str
     genre: Optional[str] = None
+    url: str
     counter: int
 
 class BookCreate(BookBase):
@@ -77,6 +79,8 @@ class BookUpdate(BaseModel):
     genre: Optional[str] = None
     availability_status: Optional[AvailabilityStatus] = AvailabilityStatus.available
     counter: Optional[int] = None
+    url : Optional[str] = None
+    desc: Optional[str] = None
 
 class BookOut(BookBase):
     book_id: int
@@ -85,7 +89,7 @@ class BookOut(BookBase):
 
     class Config:
         orm_mode = True
-        
+
 class NotificationCreate(BaseModel):
     borrow_id: int
     user_id: int
