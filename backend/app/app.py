@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Request
 from sqlalchemy.orm.session import Session
 from utils.validation import hash_password, userRoleEnumMapping, validate_password_strength, verify_password
 from utils.jwt import create_access_token
@@ -12,8 +12,22 @@ from routes.admin import router as admin_roure
 from routes.books import  router as books_routes
 from routes.user import  router as user_routes
 from routes.notifications import router as notifications_router
-
+from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
+
+
+# CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],  # Explicitly allow JWT headers
+)
+
 
 
 # the will generate the table from the modules file
@@ -21,11 +35,9 @@ app = FastAPI()
 # the require format
 modules.Base.metadata.create_all(engine)
 
-# just a main route for testing
-@app.route("/")
-def welcome():
-    return "Hello world"
-
+@app.get("/")
+async def welcome(request: Request):
+    return {"message": "Welcome to my API!"}
 
 # including the routers from the other files
 app.include_router(auth_router)

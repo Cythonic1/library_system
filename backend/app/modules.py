@@ -53,7 +53,7 @@ class Books(Base):
     genre = Column(String(100))
     counter = Column(Integer, default=0)
     availability_status = Column(Enum(schema.AvailabilityStatus), default=schema.AvailabilityStatus.available)
-    url = Column(String(255), nullable=True)
+    url = Column(String(955), nullable=True)
 
 
     added_by = Column(Integer, ForeignKey('users.user_id'))

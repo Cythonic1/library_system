@@ -1,6 +1,6 @@
 from typing_extensions import List
 from utils.authorization import require_roles
-from fastapi.routing import APIRoute, APIRouter
+from fastapi.routing import APIRoute, APIRouter,Response
 from sqlalchemy.orm.session import Session
 import schema
 from database import get_db
@@ -24,16 +24,20 @@ router = APIRouter(
 # the schema SignUpRequest. As showen below
 @router.post("/signup", status_code=HTTP_201_CREATED)
 def signup(user: schema.SignUpRequest, db: Session = Depends(get_db)):
+    print(user)
+    
+
+
+    # not nessary but checking if the username is bigger than 5 chars
+    if len(user.username) < 6 :
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="username should be 6 char min")
+    
     # fetch  data from the database
     user_db = db.query(modules.Users).filter(modules.Users.username == user.username).first()
 
     # check if the username alredy exist
     if user_db is not None :
         raise HTTPException(status_code=HTTP_409_CONFLICT, detail="Username already exists")
-
-    # not nessary but checking if the username is bigger than 5 chars
-    if len(user.username) < 6 :
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="username should be 6 char min")
 
     # checking if the password used is strong or not
     validate_password_strength(user.password)
@@ -49,6 +53,9 @@ def signup(user: schema.SignUpRequest, db: Session = Depends(get_db)):
         **user.dict(exclude={"role"}),  # exclude role from Pydantic dict
         role=role
     )
+    
+    
+    
 
     # adding the user to the database and commit the changes
     db.add(user_new)
@@ -57,9 +64,13 @@ def signup(user: schema.SignUpRequest, db: Session = Depends(get_db)):
 
 
 
-# almost same as above
 @router.post("/login")
-def login(user: schema.LoginRequest, db: Session = Depends(get_db)):
+def login(
+    response: Response,
+    user: schema.LoginRequest,
+    db: Session = Depends(get_db),
+):
+
     db_user = db.query(modules.Users).filter(modules.Users.username == user.username).first()
     if not db_user or not verify_password(user.password, db_user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -71,12 +82,24 @@ def login(user: schema.LoginRequest, db: Session = Depends(get_db)):
     }
 
     access_token = create_access_token(token_data)
-    return {"access_token": access_token, "token_type": "bearer"}
-
-
-
-@router.get("/sesstion", response_model=List[schema.UserInfo])
+    
+    # Set cookie with token
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,
+        secure=False,  # Enable in production (requires HTTPS)
+        max_age=7600,  # 1 hour expiration (adjust as needed)
+        path="/",
+    )
+    
+    return {
+    "message": "Login successful",
+    "access_token":f"Bearer {access_token}",
+    "role":db_user.role
+    }
+@router.get("/session", response_model=List[schema.UserInfo])
 def get_current_user_role(user=Depends(require_roles("admin", "librarian", "user")), db:Session = Depends(get_db)):
-    current_user = db.query(modules.Users).filter(modules.Users.user_id == user["user_id"]).first();
-    print(current_user.user_id)
+    current_user = db.query(modules.Users).filter(modules.Users.user_id == user["user_id"]).first()
+
     return [current_user]

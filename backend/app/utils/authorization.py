@@ -2,27 +2,39 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status, Request
 from .jwt import decode_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/login")
 
-
-# upon secssus this will return the current loged in User
-# or it will return an error
-# used as Dependence injection to make the
-# route validation easier
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(request: Request):
+    token_cookie = request.cookies.get("access_token")
+    if not token_cookie:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing access token cookie"
+        )
+    
+    # If token in cookie contains "Bearer " prefix, remove it:
+    if token_cookie.startswith("Bearer "):
+        token = token_cookie[7:]
+    else:
+        token = token_cookie
+    
     payload = decode_access_token(token)
+
     if not payload:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    return payload  # returns dict with 'sub' and 'role'
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
+    return payload
 
 
 
-# here is checking the user role from the givn array
-# whither it in the allowed list or not
+# Role-based access control
 def require_roles(*allowed_roles):
-    def role_checker(user=Depends(get_current_user)):
-
-        if user['role'] not in allowed_roles:
-            raise HTTPException(status_code=403, detail="Access forbidden")
+    def role_checker(user: dict = Depends(get_current_user)):
+        if user.get("role") not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access forbidden"
+            )
         return user
     return role_checker
