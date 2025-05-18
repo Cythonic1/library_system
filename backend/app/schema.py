@@ -49,7 +49,6 @@ class UserInfo(BaseModel):
     class Config:
         orm_mode = True
 
-
 class UserOutAdmin(BaseModel):
     user_id: int
     username: str
