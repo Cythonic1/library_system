@@ -42,7 +42,7 @@ def signup(user: schema.SignUpRequest, db: Session = Depends(get_db)):
     user.password = hash_password(user.password)
 
     # mapping the role. READ THE COMMENT ABOVE THE FUNCTION TO UNDERSTAND
-    role = userRoleEnumMapping(user.role)
+    role = schema.RoleEnum.user
 
     # Creating new user object
     user_new = modules.Users(
@@ -78,4 +78,5 @@ def login(user: schema.LoginRequest, db: Session = Depends(get_db)):
 @router.get("/sesstion", response_model=List[schema.UserInfo])
 def get_current_user_role(user=Depends(require_roles("admin", "librarian", "user")), db:Session = Depends(get_db)):
     current_user = db.query(modules.Users).filter(modules.Users.user_id == user["user_id"]).first();
-    return current_user
+    print(current_user.user_id)
+    return [current_user]

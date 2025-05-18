@@ -37,6 +37,11 @@ def add_users_admin(user: schema.SignUpRequestAdmin, db:Session = Depends(get_db
     if user_db is not None :
         raise HTTPException(status_code=HTTP_409_CONFLICT, detail="Username already exists")
 
+
+    email_db = db.query(modules.Users).filter(modules.Users.email == user.email).first()
+    if email_db is not None:
+        raise HTTPException(status_code=HTTP_409_CONFLICT, detail="Email already exists")
+
     # not nessary but checking if the username is bigger than 5 chars
     if len(user.username) < 6 :
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="username should be 6 char min")

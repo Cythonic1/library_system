@@ -131,3 +131,10 @@ def borrowed(book_id: int, db: Session = Depends(get_db), current_user = Depends
     db.add(borrowed)
     db.commit()
     db.refresh(book)
+
+
+@router.get("/opt/counter" ,status_code=status.HTTP_200_OK)
+def book_counter(db: Session = Depends(get_db)):
+    count = db.query(modules.Books).count()
+
+    return {"total books":count}

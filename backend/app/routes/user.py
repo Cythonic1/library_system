@@ -21,3 +21,10 @@ router = APIRouter(
     tags=["Users"]
 )
 ## TODO: Implement user update and veiw profile
+
+
+
+@router.get("/opt/counter")
+def user_counter(db:Session = Depends(get_db)):
+    counter = db.query(modules.Users).count()
+    return {"total_users": counter}
