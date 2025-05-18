@@ -19,6 +19,38 @@ router = APIRouter(
     tags=["librarian"]
 )
 
+def send_notification_to_user(
+    user_id: int,
+    message: str,
+    borrow_id: int = None,
+        db: Session = None  
+):
+    """
+    Send a notification to a specific user
+    """
+    # Check if user exists
+    user = db.query(modules.Users).filter(modules.Users.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            detail="User not found"
+        )
+
+    # Create notification
+    notification = modules.Notifications(
+        borrow_id=borrow_id,
+        user_id=user_id,
+        message=message,
+        sent_date=datetime.datetime.utcnow(),
+        accessed=False
+    )
+
+    db.add(notification)
+    db.commit()
+    db.refresh(notification)
+    
+    return notification
+
+
 
 # THis how you can make a router that allows for both the admin and librarian
 # Or you can change the require_roles prameters and make it only for librarian
@@ -30,7 +62,7 @@ def librarian_or_admin(user=Depends(require_roles("admin", "librarian"))):
 @router.get("/", status_code=status.HTTP_200_OK)
 def list_books(
     db: Session = Depends(get_db),
-    current_user = Depends(require_roles("admin", "librarian", "users"))
+    current_user = Depends(require_roles("admin", "librarian", "user"))
 ):
     return db.query(modules.Books).all()
 
@@ -101,7 +133,7 @@ def create_book(
 ):
     book_new = modules.Books(**book.dict())
     book_new.added_by = current_user["user_id"]
-    book_new.counter = book.counter;
+    book_new.counter = book.counter
     book_new.availability_status = counterCheck(book_new.counter)
     db.add(book_new)
     db.commit()
@@ -109,28 +141,43 @@ def create_book(
     return book_new
 
 
+
+
 @router.put("/borrowed/{book_id}", status_code=status.HTTP_200_OK)
-def borrowed(book_id: int, db: Session = Depends(get_db), current_user = Depends(require_roles("admin", "librarian", "users"))):
+def borrowed(book_id: int, db: Session = Depends(get_db), current_user = Depends(require_roles("admin", "librarian", "user"))):
     book = db.query(modules.Books).filter(modules.Books.book_id == book_id).first()
 
     if not book:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Book not found")
 
-
     if book.availability_status != schema.AvailabilityStatus.available:
         raise HTTPException(status_code=HTTP_409_CONFLICT, detail="Not enough books available")
 
-    book.counter = book.counter - 1
+    book.counter -= 1
     book.availability_status = counterCheck(book.counter)
+
     borrowed = modules.BorrowedBooks(
-            user_id=current_user["user_id"],
-            book_id=book.book_id,
-            borrow_date=datetime.datetime.utcnow(),
-            created_at=datetime.datetime.utcnow()
+        user_id=current_user["user_id"],
+        book_id=book.book_id,
+        borrow_date=datetime.datetime.utcnow(),
+        created_at=datetime.datetime.utcnow()
     )
+
+
+  
+
     db.add(borrowed)
-    db.commit()
+    db.commit()  
+    db.refresh(borrowed) 
     db.refresh(book)
+    send_notification_to_user(
+        user_id=current_user["user_id"],
+        message=f"You borrowed '{book.title}'",
+        borrow_id=borrowed.borrow_id,
+        db=db
+    )
+    return {"detail": "Book borrowed successfully", "borrow_id": borrowed.borrow_id}
+
 
 
 @router.get("/opt/counter" ,status_code=status.HTTP_200_OK)

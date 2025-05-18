@@ -11,40 +11,6 @@ router = APIRouter(
     tags=["notifications"]
 )
 
-### 1. Send Notifications for Borrowed Books Near Expiry
-@router.post("/send")
-def send_notifications(db: Session = Depends(get_db), current_user=Depends(require_roles("admin", "librarian"))):
-    # Find borrowed books with 1 day remaining
-    one_day_from_now = datetime.utcnow() + timedelta(days=1)
-    borrowed_books = db.query(modules.BorrowedBooks).filter(
-        modules.BorrowedBooks.borrow_date + timedelta(days=14) == one_day_from_now
-    ).all()
-
-    if not borrowed_books:
-        return {"detail": "No notifications to send"}
-
-    notifications = []
-    for borrowed in borrowed_books:
-        # Create a notification for each matching borrowed book
-        message = f"Dear user, your borrowed book (ID: {borrowed.book_id}) is due in 1 day. Please return it on time to avoid late fees."
-        notification = modules.Notifications(
-            borrow_id=borrowed.borrow_id,
-            user_id=borrowed.user_id,
-            message=message,
-            sent_date=datetime.utcnow(),
-            accessed=False
-        )
-        db.add(notification)
-        notifications.append(notification)
-
-    db.commit()
-
-    return {
-        "detail": f"Sent {len(notifications)} notifications",
-        "notifications": [n.notification_id for n in notifications]
-    }
-
-
 ### 2. List All Notifications for a User
 @router.get("/", response_model=list[schema.NotificationOut])
 def get_user_notifications(db: Session = Depends(get_db), current_user=Depends(require_roles("user", "admin", "librarian"))):
