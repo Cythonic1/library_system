@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing_extensions import List
-from fastapi.routing import APIRoute, APIRouter
+from fastapi.routing import APIRoute, APIRouter,Request
 from sqlalchemy.orm.session import Session
 import schema
 from database import get_db
@@ -14,22 +14,25 @@ from utils.authorization import require_roles
 
 # This file for the admin routers only
 
-
+from slowapi.util import get_remote_address
+from slowapi import Limiter
 
 router = APIRouter(
     prefix="/api/admin",
     tags=["auth"]
 )
-
+limiter = Limiter(key_func=get_remote_address)
+@limiter.limit("5/minute")
 @router.get("/admin-only")
-def admin_panel(user=Depends(require_roles("admin"))):
+def admin_panel(request: Request,user=Depends(require_roles("admin"))):
     return {"message": f"Welcome admin {user['sub']}"}
 
 
 
 # adding user with the admin and librarin roles
 @router.post("/users/add_users", status_code=HTTP_200_OK)
-def add_users_admin(user: schema.SignUpRequestAdmin, db:Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def add_users_admin(request: Request,user: schema.SignUpRequestAdmin, db:Session = Depends(get_db)):
     # fetch  data from the database
     user_db = db.query(modules.Users).filter(modules.Users.username == user.username).first()
 
@@ -66,14 +69,16 @@ def add_users_admin(user: schema.SignUpRequestAdmin, db:Session = Depends(get_db
 
 # Getting all the users
 @router.get("/users", response_model=List[schema.UserOutAdmin], status_code=HTTP_200_OK)
-def get_all_users(db: Session = Depends(get_db), current_user = Depends(require_roles("admin"))):
+@limiter.limit("5/minute")
+def get_all_users(request: Request,db: Session = Depends(get_db), current_user = Depends(require_roles("admin"))):
     users = db.query(modules.Users).all()
     return users
 
 
 # update users
 @router.put("/users/{user_id}")
-def update_user(user_id: int, user_update: schema.UpdateUserRequestAdmin, db: Session = Depends(get_db), current_user = Depends(require_roles("admin"))):
+@limiter.limit("5/minute")
+def update_user(request: Request,user_id: int, user_update: schema.UpdateUserRequestAdmin, db: Session = Depends(get_db), current_user = Depends(require_roles("admin"))):
     user_db = db.query(modules.Users).filter(modules.Users.user_id == user_id).first()
 
     if not user_db:
@@ -96,7 +101,8 @@ def update_user(user_id: int, user_update: schema.UpdateUserRequestAdmin, db: Se
 
 # deleting single user
 @router.delete("/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db), current_user = Depends(require_roles("admin"))):
+@limiter.limit("5/minute")
+def delete_user(request: Request,user_id: int, db: Session = Depends(get_db), current_user = Depends(require_roles("admin"))):
     user = db.query(modules.Users).filter(modules.Users.user_id == user_id).first()
 
     if not user:

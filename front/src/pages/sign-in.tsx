@@ -27,15 +27,7 @@ function SignIn() {
         return respnse.data
     },
     onSuccess: (data) => {
-      console.log(data);
-      
-      if(data.role == "admin" || data.role == "librarian"){
-        navigate("/dashboard")
-      }else{
-        navigate("/")
-      }
-      
-            
+      navigate(`/otp/${data.email}`)          
     },
     onError: (error:any) => {
       toast({

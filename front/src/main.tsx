@@ -13,6 +13,7 @@ import DashboardLayout from './components/dashboard/Layout';
 import BooksPage from './components/dashboard/books';
 import UsersPage from './components/dashboard/userse';
 import AllBooks from './pages/AllBooks';
+import OTP from './pages/otp';
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
   {
     path:"dashboard",
     element:<DashboardLayout><Dashboard/></DashboardLayout>
+  },
+  {
+    path:"otp/:email",
+    element:<OTP/>
   },
   {
     path:"dashboard/books",

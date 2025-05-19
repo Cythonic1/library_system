@@ -13,6 +13,10 @@ class RoleEnum(Enum):
     librarian = "librarian"
     user = "user"
 
+class VerifyOTP(BaseModel):
+    email: str
+    otp: str
+
 class RoleEnumUser(Enum):
     def __str__(self):
             return str(self.value)

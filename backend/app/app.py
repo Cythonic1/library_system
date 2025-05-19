@@ -1,7 +1,5 @@
 from fastapi import FastAPI, Request
 from sqlalchemy.orm.session import Session
-from utils.validation import hash_password, userRoleEnumMapping, validate_password_strength, verify_password
-from utils.jwt import create_access_token
 from utils.authorization import get_current_user, require_roles
 import modules
 from database import get_db, engine
@@ -13,8 +11,18 @@ from routes.books import  router as books_routes
 from routes.user import  router as user_routes
 from routes.notifications import router as notifications_router
 from fastapi.middleware.cors import CORSMiddleware
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+
+
 app = FastAPI()
 
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS Configuration
 app.add_middleware(
@@ -36,6 +44,8 @@ app.add_middleware(
 modules.Base.metadata.create_all(engine)
 
 @app.get("/")
+# Limit to 5 requests per minute per IP
+@limiter.limit("5/minute")
 async def welcome(request: Request):
     return {"message": "Welcome to my API!"}
 

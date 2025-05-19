@@ -1,4 +1,4 @@
-from fastapi.routing import APIRoute, APIRouter
+from fastapi.routing import APIRoute, APIRouter, Request
 from sqlalchemy.orm.session import Session
 import schema
 import datetime
@@ -9,7 +9,8 @@ import modules
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_403_FORBIDDEN, HTTP_201_CREATED, HTTP_409_CONFLICT
 from utils.jwt import create_access_token
 from utils.authorization import require_roles
-
+from slowapi.util import get_remote_address
+from slowapi import Limiter
 
 # this file for librarin routers or shared with admin only
 
@@ -18,6 +19,7 @@ router = APIRouter(
     prefix="/api/books",
     tags=["librarian"]
 )
+limiter = Limiter(key_func=get_remote_address)
 
 def send_notification_to_user(
     user_id: int,
@@ -55,12 +57,16 @@ def send_notification_to_user(
 # THis how you can make a router that allows for both the admin and librarian
 # Or you can change the require_roles prameters and make it only for librarian
 @router.get("/library-section")
-def librarian_or_admin(user=Depends(require_roles("admin", "librarian"))):
+@limiter.limit("5/minute")
+def librarian_or_admin(request:Request,user=Depends(require_roles("admin", "librarian"))):
     return {"message": f"{user['role']} has access"}
 
 # get all books
 @router.get("/", status_code=status.HTTP_200_OK)
+@limiter.limit("5/minute")
+
 def list_books(
+    request:Request,
     db: Session = Depends(get_db),
     current_user = Depends(require_roles("admin", "librarian", "user"))
 ):
@@ -70,7 +76,10 @@ def list_books(
 
 # delete a single book with Id
 @router.delete("/{book_id}", status_code=status.HTTP_200_OK)
+@limiter.limit("5/minute")
+
 def delete_book(
+    request:Request,
     book_id: int,
     db: Session = Depends(get_db),
     current_user = Depends(require_roles("admin", "librarian"))
@@ -86,7 +95,9 @@ def delete_book(
 
 # update book by its ID
 @router.put("/{book_id}", status_code=status.HTTP_200_OK)
+@limiter.limit("5/minute")
 def update_book(
+            request:Request,
     book_id: int,
     book_data: schema.BookUpdate,
     db: Session = Depends(get_db),
@@ -113,7 +124,9 @@ def update_book(
 
 #get a single book with id
 @router.get("/{book_id}", status_code=status.HTTP_200_OK)
+@limiter.limit("5/minute")
 def get_book(
+            request:Request,
     book_id: int,
     db: Session = Depends(get_db),
     current_user = Depends(require_roles("admin", "librarian", "user"))
@@ -126,7 +139,9 @@ def get_book(
 
 # create new book
 @router.post("/create", status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 def create_book(
+            request:Request,
     book: schema.BookCreate,
     db: Session = Depends(get_db),
     current_user = Depends(require_roles("admin", "librarian"))
@@ -144,7 +159,8 @@ def create_book(
 
 
 @router.put("/borrowed/{book_id}", status_code=status.HTTP_200_OK)
-def borrowed(book_id: int, db: Session = Depends(get_db), current_user = Depends(require_roles("admin", "librarian", "user"))):
+@limiter.limit("5/minute")
+def borrowed(request:Request,book_id: int, db: Session = Depends(get_db), current_user = Depends(require_roles("admin", "librarian", "user"))):
     book = db.query(modules.Books).filter(modules.Books.book_id == book_id).first()
 
     if not book:
@@ -181,7 +197,8 @@ def borrowed(book_id: int, db: Session = Depends(get_db), current_user = Depends
 
 
 @router.get("/opt/counter" ,status_code=status.HTTP_200_OK)
-def book_counter(db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def book_counter(        request:Request,db: Session = Depends(get_db)):
     count = db.query(modules.Books).count()
 
     return {"total books":count}
