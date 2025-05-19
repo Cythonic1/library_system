@@ -19,7 +19,18 @@ pip install -r requirements.txt
 # run the program
 fastapi dev app/app.py
 
+# NOTE: To enable MFA you need to add ,env file including your SMTP server detils
 
+
+
+
+As for the frontend simple.
+
+cd front
+
+npm i  
+
+npm run dev
 ```
 
 
